@@ -1,0 +1,1 @@
+export const API = "https://better-dingos-read-103-42-196-98.loca.lt/api";
