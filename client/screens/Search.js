@@ -1,20 +1,16 @@
-import React, {useContext} from 'react';
+import React from 'react';
 import { SafeAreaView} from 'react-native-safe-area-context';
 import {View} from 'react-native';
 import Text from '@kaloraat/react-native-text';
-import {AuthContext} from '../context/auth';
 import FooterTabs from '../components/nav/FooterTabs';
 
-const Home = () => {
-const [state,setState] = useContext(AuthContext);
-    return (
+export default function Search () {
+
+   return( 
         <SafeAreaView style={{flex:1}}>
-            {/* <Text>{JSON.stringify(state, null, 4)}</Text> */}
-            <Text>Welcome</Text>
+            <Text>Search Screen</Text>
             <View style={{flex:1, justifyContent:'flex-end'}} >
             <FooterTabs/>
             </View>
         </SafeAreaView>
-    )
-}
-export default Home;
+)}
