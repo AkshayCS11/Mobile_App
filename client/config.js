@@ -1,1 +1,1 @@
-export const API = "https://mean-turkeys-dance-43-229-90-199.loca.lt/api";
+export const API = "https://clean-animals-battle-43-229-90-216.loca.lt/api";

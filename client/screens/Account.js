@@ -1,16 +1,138 @@
-import React from 'react';
-import { SafeAreaView} from 'react-native-safe-area-context';
-import {View} from 'react-native';
+import React, {useState, useContext, useEffect} from 'react';
+import {ScrollView, View, Image, TouchableOpacity} from 'react-native';
 import Text from '@kaloraat/react-native-text';
-import FooterTabs from '../components/nav/FooterTabs';
+import UserInput from "../components/auth/UserInput";
+import SubmitButton from "../components/auth/SubmitButton";
+import axios from 'axios';
+import ProfileLogo from "../components/auth/ProfileLogo";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {AuthContext} from '../context/auth';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import * as ImagePicker from 'expo-image-picker';
 
-export default function Account () {
+const Account = ({navigation}) => {
+const [name, setName] = useState("")    
+const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+const [loading, setLoading] = useState(false);
+const [uploadImage, setUploadImage] = useState("");
+const [image, setImage] = useState({url: "", public_id:""});
+const [state,setState] = useContext(AuthContext);
 
-   return( 
-    <SafeAreaView style={{flex:1}}>
-    <Text>Upload Screen</Text>
-    <View style={{flex:1, justifyContent:'flex-end'}} >
-    <FooterTabs/>
+useEffect(() => {
+if(state){
+    const {name, email, image} = state.user;
+    setName(name);
+    setEmail(email);
+}
+}, [state])
+
+const handleSubmit = async () => {
+    setLoading(true);
+    if(!email || !password){
+        alert ("Please fill all the required fields");
+        setLoading(false);
+        return;
+    }
+    // console.log("SIGNUP REQUEST =>" email, password)
+    try{
+        const {data} = await axios.post(`/signin`, {
+            email, 
+            password
+        })
+        if(data.error){
+            alert(data.error);
+            setLoading(false);
+        }else{
+            //save in context
+            setState(data);
+            //save response in async storage
+            await AsyncStorage.setItem('@auth', JSON.stringify(data));
+            setLoading(false);
+            console.log("SIGN IN SUCCESS =>",data);
+            alert ("Sign in successfull");
+            //redirect
+            navigation.navigate("Home");
+        }
+    }
+    catch(err){
+        alert("Signin failed. Try again");
+        console.log(err);
+        setLoading(false);
+    };
+}
+
+const handleUpload = async() => { 
+    let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if(permissionResult.granted === false){
+        alert("Media access is required");
+        return;
+    } 
+    let pickerResult = await ImagePicker.launchImageLibraryAsync({
+        allowsediting : true,
+        aspect: [4,3],
+        base64: true,
+    });
+    if(pickerResult.cancelled === true){
+        return;
+    }
+    let base64Image = `data:image/jpg;base64,${pickerResult.base64}`;
+
+    setUploadImage(base64Image);
+};
+
+    return(
+    <KeyboardAwareScrollView 
+    contentContainerStyle={{
+        flexGrow:1, 
+        justifyContent:'center'
+        }}>
+    <View style={{mariginVertical:100}}>
+    <ProfileLogo>
+        { image && image.url ? (
+             <Image source={{uri: image.url}}
+             style={{width:190, height:190, borderRadius:100, marginVertical:20}}
+             />
+        ): uploadImage ? (
+            <Image source={{uri: uploadImage}}
+             style={{width:190, height:190, borderRadius:100, marginVertical:20}}
+            />
+        ):(
+        <TouchableOpacity onPress={()=> handleUpload()}>
+            <FontAwesome5 name="camera" size={50} color="orange"/>
+        </TouchableOpacity>
+        )}
+    </ProfileLogo>
+    {image && image.url ?(
+     <TouchableOpacity onPress={()=> handleUpload()}>
+          <FontAwesome5 name="camera" size={40} color="orange"
+          style={{marginTop:-5, marginBottom:10, alignSelf: 'center'}}
+          />
+      </TouchableOpacity>
+    ): (<></>)}
+
+    <Text title center style={{ paddingBottom: 10}}>
+            {name}
+    </Text>
+    <Text medium center style={{ paddingBottom: 50}}>
+            {email}
+    </Text>   
+        <UserInput 
+        name="PASSWORD"
+        value={password} 
+        setValue={setPassword}
+        secureTextEntry={true}
+        autoCompleteType="password"/> 
+
+        <SubmitButton
+        title="Update Password" 
+        handleSubmit={handleSubmit} 
+        loading={loading}
+        />   
     </View>
-    </SafeAreaView>    
-)}
+    </KeyboardAwareScrollView>
+    );
+}
+
+export default Account;
