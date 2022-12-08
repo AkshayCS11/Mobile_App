@@ -25,6 +25,7 @@ if(state){
     const {name, email, image} = state.user;
     setName(name);
     setEmail(email);
+    setImage(image);
 }
 }, [state])
 
@@ -37,27 +38,10 @@ const handleSubmit = async () => {
     }
     // console.log("SIGNUP REQUEST =>" email, password)
     try{
-        const {data} = await axios.post(`/signin`, {
-            email, 
-            password
-        })
-        if(data.error){
-            alert(data.error);
-            setLoading(false);
-        }else{
-            //save in context
-            setState(data);
-            //save response in async storage
-            await AsyncStorage.setItem('@auth', JSON.stringify(data));
-            setLoading(false);
-            console.log("SIGN IN SUCCESS =>",data);
-            alert ("Sign in successfull");
-            //redirect
-            navigation.navigate("Home");
-        }
+       
     }
     catch(err){
-        alert("Signin failed. Try again");
+        alert("Password update failed. Try again");
         console.log(err);
         setLoading(false);
     };
@@ -80,8 +64,21 @@ const handleUpload = async() => {
     let base64Image = `data:image/jpg;base64,${pickerResult.base64}`;
 
     setUploadImage(base64Image);
-};
 
+    const {data} = await axios.post('/upload-image',{
+        image: base64Image
+    });
+    console.log("UPLOADED RESPONSE", data);
+    //update AsyncStorage
+    const as = JSON.parse(await AsyncStorage.getItem("@auth"));
+    as.user = data;
+    await AsyncStorage.setItem("@auth", JSON.stringify(as));
+    //update context
+    setState({...state, user:data});
+    setImage(data.image);
+    alert("Profile picture saved successfully👍");
+};
+    
     return(
     <KeyboardAwareScrollView 
     contentContainerStyle={{
@@ -119,7 +116,7 @@ const handleUpload = async() => {
             {email}
     </Text>   
         <UserInput 
-        name="PASSWORD"
+        name="PASSWORD" 
         value={password} 
         setValue={setPassword}
         secureTextEntry={true}
